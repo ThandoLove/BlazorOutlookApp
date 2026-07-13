@@ -1,23 +1,52 @@
 ﻿@inherits LayoutComponentBase
+@using OperationalWorkspaceUI.UIState
+@inject UIStateContainer StateContainer
+@inject NavigationManager Nav
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
+<div class="page" style="font-family: 'Segoe UI', -apple-system, sans-serif; max-width: 100%; overflow-x: hidden;">
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <!-- Top Sticky Global Action Menu for Multi-Page Flipping -->
+        <div class="top-row px-2 d-flex justify-content-between align-items-center bg-dark text-white shadow-sm" style="height: 40px; font-size: 0.75rem; position: sticky; top: 0; z-index: 1020;">
+            <span class="font-weight-bold" style="letter-spacing: 0.5px; color: #0d6efd;">🧭 WORKSPACE</span>
+
+            @if (StateContainer.IsAuthenticated)
+            {
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-link text-white p-0 m-0 border-0 text-decoration-none" style="font-size: 0.75rem;" @onclick='() => NavigateTo("/dashboard")'>Hub</button>
+                    <span class="text-muted">|</span>
+                    <button class="btn btn-link text-white p-0 m-0 border-0 text-decoration-none" style="font-size: 0.75rem;" @onclick='() => NavigateTo("/customer-snapshot")'>Snapshot</button>
+                    <span class="text-muted">|</span>
+                    <button class="btn btn-link text-white p-0 m-0 border-0 text-decoration-none" style="font-size: 0.75rem;" @onclick='() => NavigateTo("/documents")'>Files</button>
+                </div>
+            }
+            else
+            {
+                <span class="text-muted small" style="font-size: 0.7rem;">🔒 Secured Mode</span>
+            }
         </div>
 
-        <article class="content px-4">
+        <article class="content p-3">
             @Body
         </article>
     </main>
 </div>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-</div>
+@code {
+    protected override void OnInitialized()
+    {
+        // Subscribe to global UI state mutations to automatically force component re-renders
+        StateContainer.OnStateChanged += StateHasChanged;
+    }
+
+    private void NavigateTo(string path)
+    {
+        // Retain active query tokens across separate sub-page routing frames
+        var query = Nav.ToAbsoluteUri(Nav.Uri).Query;
+        Nav.NavigateTo($"{path}{query}");
+    }
+
+    public void Dispose()
+    {
+        StateContainer.OnStateChanged -= StateHasChanged;
+    }
+}

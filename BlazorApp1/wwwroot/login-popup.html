@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Sage X3 Secure Single Sign-On Gateway</title>
+    <script src="https://microsoft.com" type="text/javascript"></script>
+    <script type="text/javascript">Office.onReady(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+
+            if (code) {
+                // Safely proxy code parameters up to parent Blazor panel container frame
+                Office.context.ui.messageParent(JSON.stringify({ status: "success", authCode: code }));
+            } else if (error) {
+                Office.context.ui.messageParent(JSON.stringify({ status: "error", message: error }));
+            }
+        });</script>
+</head>
+<body style="font-family: sans-serif; text-align: center; margin-top: 60px; background-color: #f8f9fa;">
+    <h3>Verifying Session Identity...</h3>
+    <p style="color: #6c757d; font-size: 13px;">Processing access token authorization constraints inside Syracuse secure containers.</p>
+</body>
+</html>

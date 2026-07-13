@@ -1,6 +1,32 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@using Microsoft.AspNetCore.Components.Routing
+@using OperationalWorkspaceUI.Components.Layout
+
+<Router AppAssembly="@typeof(Routes).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h5" />
     </Found>
+    <NotFound>
+        <PageTitle>Not Found</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <div class="p-4 text-center text-muted">
+                <p class="small" style="font-size: 0.8rem;">Processing workspace path resolution...</p>
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                @{
+                    AutoRedirectToGateway();
+                }
+            </div>
+        </LayoutView>
+    </NotFound>
 </Router>
+
+@code {
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    private void AutoRedirectToGateway()
+    {
+        // Enforce fallback state management query string retention
+        var activeQuery = Nav.ToAbsoluteUri(Nav.Uri).Query;
+        Nav.NavigateTo($"/{activeQuery}");
+    }
+}

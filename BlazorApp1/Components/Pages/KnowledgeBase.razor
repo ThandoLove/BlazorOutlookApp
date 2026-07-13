@@ -1,0 +1,30 @@
+﻿@page "/knowledge-base"
+@inject NavigationManager Nav
+
+<div class="kb-panel">
+    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+        <h6 class="m-0 fw-bold text-dark" style="font-size: 0.95rem;">💡 Contextual Knowledge Base</h6>
+        <button class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 0.7rem;" @onclick="GoBack">Back</button>
+    </div>
+
+    <div class="input-group mb-2">
+        <input class="form-control form-control-sm" placeholder="Query processing guidelines..." @bind="_search" style="font-size: 0.78rem;" />
+    </div>
+
+    <div class="list-group d-grid gap-1" style="font-size: 0.75rem;">
+        <div class="p-2.5 bg-white rounded border shadow-xs">
+            <div class="fw-bold text-dark">⚠️ Credit Limit Exception Override Rule</div>
+            <div class="text-muted small mt-1 lh-sm">Management signing signatures must be authorized via standard Syracuse workflow screens prior to setting status parameters back to Active.</div>
+        </div>
+        <div class="p-2.5 bg-white rounded border shadow-xs">
+            <div class="fw-bold text-dark">📦 Standard Freight Allocation Holds</div>
+            <div class="text-muted small mt-1 lh-sm">Shipment logs freeze automatically inside warehouse processing grids if balance due maps beyond safety metrics.</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _search = string.Empty;
+    private void GoBack() => Nav.NavigateTo($"/dashboard{Nav.ToAbsoluteUri(Nav.Uri).Query}");
+}
+

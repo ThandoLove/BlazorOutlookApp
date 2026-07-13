@@ -1,0 +1,38 @@
+﻿@page "/contacts"
+@using OperationalWorkspaceUI.UIState
+@inject UIStateContainer StateContainer
+@inject NavigationManager Nav
+
+<div class="contacts-pane">
+    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+        <h6 class="m-0 fw-bold text-dark" style="font-size: 0.95rem;">👥 Sage BP Contacts Directory</h6>
+        <button class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 0.7rem;" @onclick="GoBack">Back</button>
+    </div>
+
+    <div class="list-group d-grid gap-1.5">
+        @if (StateContainer.CurrentContextResponse?.Customer != null)
+        {
+            var customer = StateContainer.CurrentContextResponse.Customer;
+            <div class="list-group-item p-2.5 bg-white rounded border-start border-4 border-success shadow-sm" style="font-size: 0.8rem;">
+                <div class="fw-bold text-dark">@customer.ContactName (Account Lead)</div>
+                <div class="text-muted small" style="font-size: 0.72rem;">Primary Operator • @customer.Email</div>
+                <div class="mt-1 small fw-bold text-secondary" style="font-size: 0.7rem;">📞 Corporate Line Mapping Sync: Active</div>
+            </div>
+        }
+
+        <div class="list-group-item p-2.5 bg-white rounded border border-start border-4 border-secondary shadow-sm" style="font-size: 0.8rem;">
+            <div class="fw-bold text-dark">Robert Chen</div>
+            <div class="text-muted small" style="font-size: 0.72rem;">Accounts Payable Operations • processing@clientcompany.com</div>
+        </div>
+    </div>
+
+    <!-- Quick Knowledge Base Shortcut Bar -->
+    <div class="card p-2 bg-light border-0 mt-3 text-center shadow-xs" style="font-size: 0.75rem;">
+        <span class="text-muted">Need internal procedural assistance? <button class="btn btn-link p-0 m-0 font-weight-bold text-decoration-none small" style="font-size: 0.75rem;" @onclick='() => Nav.NavigateTo($"/knowledge-base{Nav.ToAbsoluteUri(Nav.Uri).Query}")'>Launch Assistant</button></span>
+    </div>
+</div>
+
+@code {
+    private void GoBack() => Nav.NavigateTo($"/dashboard{Nav.ToAbsoluteUri(Nav.Uri).Query}");
+}
+

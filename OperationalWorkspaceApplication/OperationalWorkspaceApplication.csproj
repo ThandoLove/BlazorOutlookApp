@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\OperationalWorkspaceDomain\OperationalWorkspaceDomain.csproj" />
+    <ProjectReference Include="..\OperationalWorkspaceInfrastruture\OperationalWorkspaceInfrastruture.csproj" />
+  </ItemGroup>
+
 </Project>

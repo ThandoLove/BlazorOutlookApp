@@ -1,0 +1,79 @@
+﻿@page "/tasks"
+@using OperationalWorkspaceUI.UIState
+@using OperationalWorkspaceUI.UIServices
+@using OperationalWorkspaceUI.Models
+@using OperationalWorkspaceApplication.Requests.TicketRequest
+@inject UIStateContainer StateContainer
+@inject IWorkspaceApiService ApiService
+@inject NavigationManager Nav
+
+<div class="tasks-panel">
+    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+        <h6 class="m-0 fw-bold text-dark" style="font-size: 0.95rem;">📋 Tasks & Incident Entry</h6>
+        <button class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 0.7rem;" @onclick="GoBack">Back</button>
+    </div>
+
+    <!-- Protected Action Security Rule Block Validation -->
+    @if (StateContainer.UserRoleScope.Contains("Admin") || StateContainer.UserRoleScope.Contains("Sales") || StateContainer.UserRoleScope.Contains("Consultant"))
+    {
+        <div class="card p-2.5 border shadow-sm bg-white mb-3">
+            <div class="form-group mb-2">
+                <label class="small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Incident Action / Complaint Title</label>
+                <input class="form-control form-control-sm" placeholder="Brief subject line description..." @bind="_model.Subject" style="font-size: 0.78rem;" />
+            </div>
+            <div class="form-group mb-2">
+                <label class="small fw-bold text-muted mb-1" style="font-size: 0.72rem;">Operational Elaborations</label>
+                <textarea class="form-control form-control-sm" placeholder="Detailed notes..." @bind="_model.Description" rows="3" style="font-size: 0.78rem;"></textarea>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_model.SuccessFeedbackMessage))
+            {
+                <div class="alert alert-success p-1.5 small mb-2" style="font-size: 0.72rem;">@_model.SuccessFeedbackMessage</div>
+            }
+
+            <button class="btn btn-primary btn-sm w-100 fw-bold" style="font-size: 0.75rem;" @onclick="SubmitTaskForm" disabled="@(_model.IsSubmitting || string.IsNullOrWhiteSpace(_model.Subject))">
+                @if (_model.IsSubmitting)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                }
+                else
+                {
+
+                    <span>🔒 Securely Post to Sage Registry</span>
+                }
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning small p-2">⚠️ PipelineWriteAccess Denied. Your Sage role scope does not authorize filing tracking cards.</div>
+    }
+</div>
+
+@code {
+    private TicketSubmissionViewModel _model = new();
+
+    private async Task SubmitTaskForm()
+    {
+        _model.IsSubmitting = true;
+        _model.SuccessFeedbackMessage = string.Empty;
+
+        var cmd = new CreateTicketCommand(
+            StateContainer.CurrentContextResponse?.Customer?.Id ?? "UNKNOWN_BP",
+            _model.Subject, _model.Description, "Mail Body Context Extraction", "MSG-ID-881", StateContainer.ActiveUserEmail
+        );
+
+        var res = await ApiService.SubmitIncidentTicketAsync(cmd, "MOCK_USER_TOKEN");
+        if (res != null && res.IsSuccess)
+        {
+            _model.SuccessFeedbackMessage = $"Success! Incident logged under Reference Code Token ID: {res.TicketId} (Assigned Priority: {res.AssignedPriority})";
+            _model.Subject = string.Empty;
+            _model.Description = string.Empty;
+        }
+
+        _model.IsSubmitting = false;
+    }
+
+    private void GoBack() => Nav.NavigateTo($"/dashboard{Nav.ToAbsoluteUri(Nav.Uri).Query}");
+}
+
