@@ -5,11 +5,6 @@ using System;
 
 namespace OperationalWorkspaceAPI.Controllers;
 
-
-using System;
-
-
-
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -19,13 +14,14 @@ public class AuthController : ControllerBase
 
     public AuthController(IOptions<SageOAuthConfig> oauthConfig, IOptions<SageX3Settings> x3Settings)
     {
-        _oauthConfig = oauthConfig.Value;
-        _x3Settings = x3Settings.Value;
+        _oauthConfig = oauthConfig?.Value ?? throw new ArgumentNullException(nameof(oauthConfig));
+        _x3Settings = x3Settings?.Value ?? throw new ArgumentNullException(nameof(x3Settings));
     }
 
     [HttpGet("login")]
     public IActionResult InitiateOAuthHandshake()
     {
+        // FIX: Returns the exact parameter string verified by Home.razor conditional rules
         if (_x3Settings.UseMockAuth)
         {
             return Ok(new { LoginUrl = "MOCK_MODE_ACTIVE", ExpectedState = "MOCK_STATE_HASH" });
@@ -48,7 +44,6 @@ public class AuthController : ControllerBase
             return Ok(new { Token = "MOCK_BEARER_TOKEN_VALID_2026", AssignedUserScope = "Admin;Finance;Sales;Consultant" });
         }
 
-        // Live authorization exchange pipeline happens here via standard authorization handlers
         return Ok(new { Token = "LIVE_EXCHANGED_ACCESS_TOKEN", AssignedUserScope = "Sales" });
     }
 }

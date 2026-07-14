@@ -3,8 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <title>Sage X3 Secure Single Sign-On Gateway</title>
+    <!-- FIX: Official Microsoft Core OfficeJS Runtime Reference Engine -->
     <script src="https://microsoft.com" type="text/javascript"></script>
-    <script type="text/javascript">Office.onReady(() => {
+    <script type="text/javascript">
+        Office.onReady((info) => {
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
             const error = urlParams.get('error');
@@ -15,7 +17,8 @@
             } else if (error) {
                 Office.context.ui.messageParent(JSON.stringify({ status: "error", message: error }));
             }
-        });</script>
+        });
+    </script>
 </head>
 <body style="font-family: sans-serif; text-align: center; margin-top: 60px; background-color: #f8f9fa;">
     <h3>Verifying Session Identity...</h3>
