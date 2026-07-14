@@ -14,4 +14,7 @@ public class SageX3Settings
     public bool UseMocks { get; set; } = true;
     public bool UseMockAuth { get; set; } = true;
     public int HttpClientTimeoutSeconds { get; set; } = 15;
+ 
+    public string ClientId { get; set; } = string.Empty;
+    public string ClientSecret { get; set; } = string.Empty;
 }

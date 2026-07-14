@@ -27,19 +27,22 @@
             <div class="row g-1.5 mb-3 text-center">
                 <div class="col-4">
                     <div class="p-1.5 border rounded bg-white shadow-xs">
-                        <div class="text-muted" style="font-size: 0.62rem; text-uppercase: uppercase;">Total</div>
+                        <!-- FIX: Replaced invalid CSS 'text-uppercase' property with standard 'text-transform: uppercase' -->
+                        <div class="text-muted" style="font-size: 0.62rem; text-transform: uppercase;">Total</div>
                         <div class="fw-bold text-primary" style="font-size: 1.1rem;">@_report.TotalTicketsFiled</div>
                     </div>
                 </div>
                 <div class="col-4">
                     <div class="p-1.5 border rounded bg-white shadow-xs">
-                        <div class="text-muted" style="font-size: 0.62rem; text-uppercase: uppercase;">Active</div>
+                        <!-- FIX: Replaced invalid CSS 'text-uppercase' property with standard 'text-transform: uppercase' -->
+                        <div class="text-muted" style="font-size: 0.62rem; text-transform: uppercase;">Active</div>
                         <div class="fw-bold text-warning" style="font-size: 1.1rem;">@_report.OpenCount</div>
                     </div>
                 </div>
                 <div class="col-4">
                     <div class="p-1.5 border rounded bg-white shadow-xs">
-                        <div class="text-muted" style="font-size: 0.62rem; text-uppercase: uppercase;">Critical</div>
+                        <!-- FIX: Replaced invalid CSS 'text-uppercase' property with standard 'text-transform: uppercase' -->
+                        <div class="text-muted" style="font-size: 0.62rem; text-transform: uppercase;">Critical</div>
                         <div class="fw-bold text-danger" style="font-size: 1.1rem;">@_report.HighPriorityCount</div>
                     </div>
                 </div>
@@ -89,7 +92,6 @@
 
         try
         {
-            // Inject security simulation parameters to clear the custom handler conditions locally
             _report = await Http.GetFromJsonAsync<AuditReportDto>("api/ticket/report/summary?useMocks=true");
         }
         catch { _report = null; }
@@ -98,4 +100,3 @@
 
     private void GoBack() => Nav.NavigateTo($"/dashboard{Nav.ToAbsoluteUri(Nav.Uri).Query}");
 }
-

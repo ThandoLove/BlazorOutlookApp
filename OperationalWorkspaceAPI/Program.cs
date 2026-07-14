@@ -4,8 +4,11 @@ using Microsoft.Extensions.Hosting;
 using OperationalWorkspaceAPI.Extensions;
 using OperationalWorkspaceAPI.Middleware;
 
-
 var builder = WebApplication.CreateBuilder(args);
+
+// --- MANDATORY INFRASTRUCTURE REPAIR LINE ---
+// Explicitly registers IHttpContextAccessor so your custom Authorization policies can safely extract request headers
+builder.Services.AddHttpContextAccessor();
 
 // 1. Centralize Dependency Injection assemblies across projects
 builder.Services.RegisterCoreWorkspaceDependencies(builder.Configuration);

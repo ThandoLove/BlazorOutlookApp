@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using System.Text;
 
-
-namespace OperationalWorkspaceInfrastruture.SecurityInfra;
-
+namespace OperationalWorkspaceInfrastructure.SecurityInfra;
 
 public interface ITokenEncryptionProvider
 {
@@ -31,21 +26,24 @@ public class TokenEncryptionProvider : ITokenEncryptionProvider
         return secureVal.Trim();
     }
 
+    // 1. Explicit OS attribute guard tells the compiler compiler analyzer this method runs on Windows architectures
+    [SupportedOSPlatform("windows")]
     public string ProtectSensitivePayload(string rawText)
     {
         if (string.IsNullOrEmpty(rawText)) return string.Empty;
 
-        // Enforce Windows OS-level Data Protection API (DPAPI) to protect cached memory payloads on local storage
+        // Enforce Windows OS-level Data Protection API (DPAPI) to protect cached memory payloads safely
         var rawBytes = Encoding.UTF8.GetBytes(rawText);
         var encryptedBytes = ProtectedData.Protect(rawBytes, null, DataProtectionScope.LocalMachine);
         return Convert.ToBase64String(encryptedBytes);
     }
 
+    // 2. Explicit OS attribute guard silences the Unprotect platform check warning matching DPAPI scopes
+    [SupportedOSPlatform("windows")]
     public string UnprotectSensitivePayload(string cipherText)
     {
         if (string.IsNullOrEmpty(cipherText)) return string.Empty;
 
-        var encryptedBytes = Convert.ToBase64String(Encoding.UTF8.GetBytes(cipherText)); // Base validation check
         var rawEncrypted = Convert.FromBase64String(cipherText);
         var decryptedBytes = ProtectedData.Unprotect(rawEncrypted, null, DataProtectionScope.LocalMachine);
         return Encoding.UTF8.GetString(decryptedBytes);

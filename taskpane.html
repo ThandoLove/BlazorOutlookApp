@@ -1,0 +1,63 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Sage X3 Workspace Bootstrapper</title>
+
+    <!-- Official, Secure Microsoft OfficeJS Core CDN Library Reference Link -->
+    <script src="https://microsoft.com" type="text/javascript"></script>
+    <script src="taskpane.js" type="text/javascript"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .bootstrap-loader {
+            border: 3px solid #e1e1e1;
+            border-top: 3px solid #0d6efd;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            animation: spin 0.8s linear infinite;
+            margin: 60px auto 16px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        h4 {
+            color: #212529;
+            font-size: 1rem;
+            margin: 0 0 4px 0;
+            font-weight: 600;
+        }
+
+        p {
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="loader-container">
+        <div class="bootstrap-loader"></div>
+        <h4>Synchronizing Sage X3</h4>
+        <p>Extracting secure communication context parameters...</p>
+    </div>
+</body>
+</html>

@@ -19,6 +19,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OperationalWorkspaceAddin",
 		icon32.png = icon32.png
 		icon80.png = icon80.png
 		manifest.xml = manifest.xml
+		taskpane.html = taskpane.html
+		taskpane.js = taskpane.js
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperationalWorkspaceUnitTests", "OperationalWorkspaceUnitTests\OperationalWorkspaceUnitTests.csproj", "{17995046-9F64-488F-BD7C-109D9B4F8E87}"

@@ -1,1 +1,169 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
+  xsi:type="MailApp">
+
+	<Id>AB7AE7CE-FA10-4331-9894-68983F4A744B</Id>
+	<Version>1.0.0.0</Version>
+	<ProviderName>X3-consulting</ProviderName>
+	<DefaultLocale>en-US</DefaultLocale>
+	<DisplayName DefaultValue="Sage X3 Workspace"/>
+	<Description DefaultValue="Production ERP panel enabling real-time Customer 360, Document Attachment, and Task logging directly from Outlook."/>
+
+	<IconUrl DefaultValue="https://workspace.local"/>
+	<HighResolutionIconUrl DefaultValue="https://workspace.local"/>
+
+	<Hosts>
+		<Host Name="Mailbox" />
+	</Hosts>
+
+	<Requirements>
+		<Sets DefaultMinVersion="1.1">
+			<Set Name="Mailbox" />
+		</Sets>
+	</Requirements>
+
+	<FormSettings>
+		<Form xsi:type="ItemRead">
+			<DesktopSettings>
+				<!-- Standard fallback URL target pointing directly to our lightweight context bootstrapper -->
+				<SourceLocation DefaultValue="https://workspace.local"/>
+				<RequestedHeight>250</RequestedHeight>
+			</DesktopSettings>
+		</Form>
+	</FormSettings>
+
+	<Permissions>ReadWriteItem</Permissions>
+
+	<Rule xsi:type="RuleCollection" Mode="Or">
+		<Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
+		<Rule xsi:type="ItemIs" ItemType="Message" FormType="Edit"/>
+	</Rule>
+
+	<DisableEntityHighlighting>false</DisableEntityHighlighting>
+
+	<!-- ADVANCED VERSION OVERRIDES 1.1 INTERFACE DEFINITIONS -->
+	<VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.0" xsi:type="VersionOverridesV1_0">
+		<Description resid="residAppDescription" />
+		<Requirements>
+			<bt:Sets DefaultMinVersion="1.3">
+				<bt:Set Name="Mailbox" />
+			</bt:Sets>
+		</Requirements>
+
+		<Hosts>
+			<Host xsi:type="MailHost">
+
+				<!-- READ MODE INTERFACE RULES (Mail Arriving / View Mode) -->
+				<DesktopFormFactor>
+					<FunctionFile resid="residFuncFile" />
+
+					<ExtensionPoint xsi:type="MessageReadCommandSurface">
+						<OfficeTab id="TabDefault">
+							<Group id="grpSageReadWorkspace">
+								<Label resid="lblSageGroup" />
+
+								<!-- Action 1: Open Main Cockpit Hub -->
+								<Control xsi:type="Button" id="btnOpenHub">
+									<Label resid="lblOpenHub" />
+									<Supertip>
+										<Title resid="lblOpenHub" />
+										<Description resid="tipOpenHub" />
+									</Supertip>
+									<Icon>
+										<bt:Image size="16" resid="icon16" />
+										<bt:Image size="32" resid="icon32" />
+										<bt:Image size="80" resid="icon80" />
+									</Icon>
+									<Action xsi:type="ShowTaskpane">
+										<SourceLocation resid="urlTaskpane" />
+									</Action>
+								</Control>
+
+								<!-- Action 2: Quick Jump to Invoices & Universal Document Viewer -->
+								<Control xsi:type="Button" id="btnViewDocs">
+									<Label resid="lblViewDocs" />
+									<Supertip>
+										<Title resid="lblViewDocs" />
+										<Description resid="tipViewDocs" />
+									</Supertip>
+									<Icon>
+										<bt:Image size="16" resid="icon16" />
+										<bt:Image size="32" resid="icon32" />
+										<bt:Image size="80" resid="icon80" />
+									</Icon>
+									<Action xsi:type="ShowTaskpane">
+										<!-- Targets Blazor sub-routing states directly via manifest definitions -->
+										<SourceLocation resid="urlDocuments" />
+									</Action>
+								</Control>
+							</Group>
+						</OfficeTab>
+					</ExtensionPoint>
+
+					<!-- COMPOSE MODE INTERFACE RULES (New Emails / Draft Replies) -->
+					<ExtensionPoint xsi:type="MessageComposeCommandSurface">
+						<OfficeTab id="TabDefault">
+							<Group id="grpSageComposeWorkspace">
+								<Label resid="lblSageGroup" />
+
+								<!-- Action 3: Attachment Injector & Email Reply Composer Panel -->
+								<Control xsi:type="Button" id="btnComposeEngine">
+									<Label resid="lblComposeEngine" />
+									<Supertip>
+										<Title resid="lblComposeEngine" />
+										<Description resid="tipComposeEngine" />
+									</Supertip>
+									<Icon>
+										<bt:Image size="16" resid="icon16" />
+										<bt:Image size="32" resid="icon32" />
+										<bt:Image size="80" resid="icon80" />
+									</Icon>
+									<Action xsi:type="ShowTaskpane">
+										<SourceLocation resid="urlTaskpane" />
+									</Action>
+								</Control>
+							</Group>
+						</OfficeTab>
+					</ExtensionPoint>
+
+				</DesktopFormFactor>
+			</Host>
+		</Hosts>
+
+		<!-- CORE STRUCTURAL METADATA RESOURCES DICTIONARY -->
+		<Resources>
+			<bt:Images>
+				<bt:Image id="icon16" DefaultValue="https://workspace.local" />
+				<bt:Image id="icon32" DefaultValue="https://workspace.local" />
+				<bt:Image id="icon80" DefaultValue="https://workspace.local" />
+			</bt:Images>
+
+			<bt:Urls>
+				<!-- Bootstrapper launcher mapping targets -->
+				<bt:Url id="residFuncFile" DefaultValue="https://workspace.local" />
+				<bt:Url id="urlTaskpane" DefaultValue="https://workspace.local" />
+
+				<!-- Direct deep-linking routes mapped straight to Blazor page routers -->
+				<bt:Url id="urlDocuments" DefaultValue="https://workspace.local?targetPage=documents" />
+			</bt:Urls>
+
+			<bt:ShortStrings>
+				<bt:String id="lblSageGroup" DefaultValue="Sage X3 Operations" />
+				<bt:String id="lblOpenHub" DefaultValue="Open Workspace Hub" />
+				<bt:String id="lblViewDocs" DefaultValue="View ERP Ledger Files" />
+				<bt:String id="lblComposeEngine" DefaultValue="ERP Smart Composer" />
+			</bt:ShortStrings>
+
+			<bt:LongStrings>
+				<bt:String id="residAppDescription" DefaultValue="Production Sage X3 application workspace context parser." />
+				<bt:String id="tipOpenHub" DefaultValue="Launches the real-time Customer 360 tracking system console panel." />
+				<bt:String id="tipViewDocs" DefaultValue="Loads matching invoices, delivery slips, and sales order data sheets." />
+				<bt:String id="tipComposeEngine" DefaultValue="Launches the smart layout tool to attach files or insert drafts." />
+			</bt:LongStrings>
+		</Resources>
+	</VersionOverrides>
+</OfficeApp>
