@@ -53,8 +53,8 @@ public static class IdentityModelMapper
             entity.CustomerId,
             entity.Subject,
             entity.Description,
-            entity.Priority,
-            entity.Status,
+            entity.Priority.ToString(),
+            entity.Status.ToString(),
             entity.CreatedAt
         );
     }

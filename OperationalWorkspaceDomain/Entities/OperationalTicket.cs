@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using OperationalWorkspaceDomain.Enums;
+using OperationalWorkspaceDomain.Enums.TicketsEnum;
+using OperationalWorkspaceDomain.Strategies;
+using System;
 
 namespace OperationalWorkspaceDomain.Entities;
-
 
 public class OperationalTicket
 {
@@ -13,56 +11,54 @@ public class OperationalTicket
     public string CustomerId { get; private set; } = string.Empty;
     public string Subject { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
-    public string Priority { get; private set; } = "Medium"; // Low, Medium, High, Critical
-    public string Status { get; private set; } = "Open";    // Open, Investigating, Closed
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
-    public string OriginatingEmailId { get; private set; } = string.Empty;
+    public string EmailBody { get; private set; } = string.Empty;
+    public string EmailMessageId { get; private set; } = string.Empty;
 
+    // Rich Enum structural fields replacing fragile strings
+    public TicketPriority Priority { get; private set; }
+    public TicketStatus Status { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+
+    // Private Constructor prevents parameter bypass mutations
     private OperationalTicket() { }
 
     public static OperationalTicket OpenNewWorkspaceIncident(
-        string customerId, string subject, string description, string incomingEmailBody, string emailMessageId)
+        string customerId,
+        string subject,
+        string description,
+        string emailBody,
+        string emailMessageId,
+        ITicketPriorityStrategy priorityPolicy) // Enforces policy injection dependency invariant
     {
-        if (string.IsNullOrWhiteSpace(customerId)) throw new ArgumentException("Incident logs require an associated Customer Code reference.");
-        if (string.IsNullOrWhiteSpace(subject)) throw new ArgumentException("Summary action items require a subject descriptor statement.");
+        if (string.IsNullOrWhiteSpace(customerId))
+            throw new ArgumentException("Incident logs require a valid Customer reference tracking token.", nameof(customerId));
 
-        // Non-boilerplate AI/Log routing prep tracker automation rule:
-        string computedPriority = "Medium";
-        string criticalContext = (subject + " " + description + " " + incomingEmailBody).ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(subject))
+            throw new ArgumentException("Incident title summary item cannot be empty.", nameof(subject));
 
-        if (criticalContext.Contains("LEGAL") || criticalContext.Contains("COMPLAINT") || criticalContext.Contains("BROKEN"))
-        {
-            computedPriority = "High";
-        }
-        if (criticalContext.Contains("LITIGATION") || criticalContext.Contains("LAWSUIT") || criticalContext.Contains("CRITICAL"))
-        {
-            computedPriority = "Critical";
-        }
+        ArgumentNullException.ThrowIfNull(priorityPolicy);
+
+        var calculatedPriority = priorityPolicy.DeterminePriority(subject, description, emailBody);
 
         return new OperationalTicket
         {
-            Id = $"TK-TEMP-{Guid.NewGuid().ToString()[..8].ToUpperInvariant()}",
+            Id = $"PENDING-{Guid.NewGuid().ToString()[..8].ToUpperInvariant()}",
             CustomerId = customerId.Trim().ToUpperInvariant(),
             Subject = subject.Trim(),
-            Description = description.Trim(),
-            Priority = computedPriority,
-            Status = "Open",
-            CreatedAt = DateTime.UtcNow,
-            OriginatingEmailId = emailMessageId ?? string.Empty
+            Description = description?.Trim() ?? string.Empty,
+            EmailBody = emailBody?.Trim() ?? string.Empty,
+            EmailMessageId = emailMessageId?.Trim() ?? string.Empty,
+            Priority = calculatedPriority,
+            Status = TicketStatus.Open,
+            CreatedAt = DateTime.UtcNow
         };
     }
 
-    public void UpdateProgressState(string newStatus)
+    public void AssignFinalDatabaseIdentityToken(string finalizedId)
     {
-        if (newStatus != "Open" && newStatus != "Investigating" && newStatus != "Closed")
-            throw new InvalidOperationException("Illegal transition configuration state parameters.");
+        if (string.IsNullOrWhiteSpace(finalizedId))
+            throw new InvalidOperationException("Cannot assign an empty persistence identifier.");
 
-        Status = newStatus;
-    }
-
-    public void AssignFinalDatabaseIdentityToken(string finalizedDbId)
-    {
-        if (!Id.StartsWith("TK-TEMP-")) throw new InvalidOperationException("Identity signatures already permanently frozen.");
-        Id = finalizedDbId;
+        Id = finalizedId;
     }
 }

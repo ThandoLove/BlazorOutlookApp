@@ -1,0 +1,52 @@
+﻿@using System.Threading.Tasks
+
+<div class="card p-3 my-2 text-center border rounded shadow-xs bg-white"
+     role="alert"
+     aria-live="assertive"
+     aria-atomic="true">
+
+    @if (IsOffline)
+    {
+        <!-- Section 9 Resolution: User-Friendly Offline Indicator Layout Panel -->
+        <div class="mb-2" style="font-size: 1.5rem;" aria-hidden="true">🌐</div>
+        <h6 class="text-warning fw-bold m-0 text-header">Connection Offline</h6>
+        <p class="text-muted my-2 text-small">Your computer is currently disconnected from the network. Stored offline mock data viewports are active.</p>
+    }
+    else if (IsLoading)
+    {
+        <div class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></div>
+        <p class="mt-2 mb-0 text-dark fw-semibold text-small">@LoadingMessage</p>
+    }
+    else if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="mb-2" style="font-size: 1.5rem;" aria-hidden="true">⚠️</div>
+        <h6 class="text-danger fw-bold m-0 text-header">Transaction Blocked</h6>
+        <p class="text-muted my-2 text-small">@ErrorMessage</p>
+
+        @if (OnRetryCallback.HasDelegate)
+        {
+            <button class="btn btn-sm btn-primary fw-bold text-small px-3 mt-1 shadow-xs"
+                    type="button"
+                    aria-label="Retry loading data from Sage X3"
+                    @onclick="TriggerRetryLoop">
+                🔄 Retry Operation
+            </button>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public bool IsOffline { get; set; } = false; // Added offline support handle parameters
+    [Parameter] public bool IsLoading { get; set; } = false;
+    [Parameter] public string LoadingMessage { get; set; } = "Querying secure application schemas...";
+    [Parameter] public string ErrorMessage { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnRetryCallback { get; set; }
+
+    private async Task TriggerRetryLoop()
+    {
+        if (OnRetryCallback.HasDelegate)
+        {
+            await OnRetryCallback.InvokeAsync();
+        }
+    }
+}

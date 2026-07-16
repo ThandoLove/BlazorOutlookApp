@@ -1,22 +1,23 @@
-﻿
-using Microsoft.Extensions.Options; 
-using OperationalWorkspaceApplication.Dtos;
+﻿using OperationalWorkspaceApplication.Dtos;
 using OperationalWorkspaceApplication.IServices;
 using OperationalWorkspaceApplication.Jobs;
 using OperationalWorkspaceApplication.Mappers;
 using OperationalWorkspaceApplication.Requests.CustomerRequest;
 using OperationalWorkspaceApplication.Responses.WorkspaceContextResponse;
 using OperationalWorkspaceDomain.Entities;
-using OperationalWorkspaceInfrastruture.Configuration;
-using OperationalWorkspaceInfrastruture.InfraServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
-
 namespace OperationalWorkspaceApplication.Services;
+
+/// <summary>
+/// Architectural Contract Interface to isolate Configuration details from the Application Layer.
+/// Define this inside your application space (e.g. creating an ISageX3Configuration.cs file if not yet existing).
+/// </summary>
 
 
 public class CustomerService : ICustomerService
@@ -24,18 +25,18 @@ public class CustomerService : ICustomerService
     private readonly ISageX3GraphQLClient _graphQlClient;
     private readonly IPremiumWorkspaceEngine _premiumEngine;
     private readonly IAuditLogQueue _auditQueue;
-    private readonly SageX3Settings _settings;
+    private readonly ISageX3Configuration _config; // Injected pure contract abstraction interface
 
     public CustomerService(
         ISageX3GraphQLClient graphQlClient,
         IPremiumWorkspaceEngine premiumEngine,
         IAuditLogQueue auditQueue,
-        IOptions<SageX3Settings> settings)
+        ISageX3Configuration config) // Structural Dependency Inversion Fix
     {
         _graphQlClient = graphQlClient;
         _premiumEngine = premiumEngine;
         _auditQueue = auditQueue;
-        _settings = settings.Value;
+        _config = config;
     }
 
     public async Task<WorkspaceContextResponse> ResolveWorkspaceContextAsync(GetCustomerContextQuery query, CancellationToken ct)
@@ -55,7 +56,8 @@ public class CustomerService : ICustomerService
         Customer? customerEntity;
         List<SageDocument> documentEntities = new();
 
-        if (_settings.UseMocks)
+        // Evaluates properties directly off your clean Application boundary contract interface
+        if (_config.UseMocks)
         {
             // Execute simulated isolated operational contexts instantly bypassing live endpoints
             if (query.SenderEmail.Contains("acme") || query.SenderEmail.Contains("customer"))

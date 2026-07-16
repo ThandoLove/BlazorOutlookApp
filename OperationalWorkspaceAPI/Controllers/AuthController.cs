@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using OperationalWorkspaceInfrastruture.Configuration;
+using OperationalWorkspaceInfrastructure.Configuration;
 using System;
 
 namespace OperationalWorkspaceAPI.Controllers;

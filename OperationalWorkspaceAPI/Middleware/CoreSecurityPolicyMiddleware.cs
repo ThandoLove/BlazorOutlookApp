@@ -23,14 +23,14 @@ public class CoreSecurityPolicyMiddleware
         // 3. Control cross-origin leaking vectors
         context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
 
-        // 4. Tight Content Security Policy (CSP) tailored exactly for modern Office.js + Blazor script engines
+        // 4. FIX: Upgraded Content Security Policy to authorize local scripts and offline styles seamlessly
         context.Response.Headers.Append("Content-Security-Policy",
             "default-src 'self'; " +
-            "script-src 'self' 'unsafe-eval' https://microsoft.com; " +
-            "style-src 'self' 'unsafe-inline' https://jsdelivr.net; " +
-            "connect-src 'self' https://workspace.local https://*.your-sage-x3-server.com; " +
+            "script-src 'self' 'unsafe-eval' https://appsforoffice.microsoft.com; " +
+            "style-src 'self' 'unsafe-inline'; " + // FIX: Grants clearance to local bootstrap and app sheets natively
+            "connect-src 'self' https://workspace.local; " +
             "img-src 'self' data: https://workspace.local; " +
-            "frame-ancestors 'self' https://office.com https://office365.com;");
+            "frame-ancestors 'self' https://office.com https://office365.com https://outlook.office.com;");
 
         await _next(context);
     }

@@ -1,32 +1,102 @@
-/* Custom Viewport Constraints Tailored Exactly for Small Outlook Side-Panes */
+/* ==========================================================================
+   Phase 5 Resolution: Tokenised Enterprise Design System Variables
+   ========================================================================== */
+:root {
+    /* Color Contrast Design Tokens */
+    --sage-primary: #0078d4;
+    --sage-primary-hover: #106ebe;
+    --sage-dark: #212529;
+    --sage-light-bg: #f8f9fa;
+    --sage-text-main: #212529;
+    --sage-text-muted: #605e5c;
+    --sage-border-color: rgba(0, 0, 0, .06);
+    /* Strict Financial Alert Signal Systems */
+    --sage-alert-success: #107c41;
+    --sage-alert-warning: #b15d00;
+    --sage-alert-danger: #a80000;
+    /* Fixed Task-Pane Spacing Tokens */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    /* Compact Typography Scale */
+    --font-size-caption: 0.65rem;
+    --font-size-small: 0.72rem;
+    --font-size-body: 13px;
+    --font-size-header: 0.90rem;
+}
+
+/* ==========================================================================
+   Core Viewport Constraints Tailored Exactly for Small Outlook Side-Panes 
+   ========================================================================== */
 html, body {
     font-family: 'Segoe UI', -apple-system, system-ui, sans-serif;
-    background-color: #f8f9fa;
-    color: #212529;
-    font-size: 13px;
+    background-color: var(--sage-light-bg);
+    color: var(--sage-text-main);
+    font-size: var(--font-size-body);
     user-select: none;
     overflow-x: hidden;
+    line-height: 1.4;
 }
 
 .workspace-viewport {
     max-width: 100%;
-    padding: 12px !important;
+    padding: var(--spacing-md) !important;
 }
 
 .card {
     border-radius: 6px;
-    border: 1px solid rgba(0, 0, 0, .06);
+    border: 1px solid var(--sage-border-color);
     box-shadow: 0 1px 3px rgba(0, 0, 0, .02);
 }
 
 .badge-xs {
-    font-size: 0.65rem;
+    font-size: var(--font-size-caption);
     padding: 3px 6px;
     font-weight: 600;
     border-radius: 4px;
 }
 
-/* Custom Modal Constraints for the Inline Document Viewer */
+.truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   Phase 5 Optimization: Accessible Virtualized List View Row Configurations
+   ========================================================================== */
+.text-caption {
+    font-size: var(--font-size-caption);
+    color: var(--sage-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.text-small {
+    font-size: var(--font-size-small);
+}
+
+.text-header {
+    font-size: var(--font-size-header);
+    font-weight: 700;
+    color: var(--sage-dark);
+}
+
+.compact-list-row {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--sage-border-color);
+    transition: background-color 0.15s ease-in-out;
+}
+
+    .compact-list-row:hover {
+        background-color: #f3f2f1;
+    }
+
+/* ==========================================================================
+   Custom Modal Constraints for the Inline Document Viewer 
+   ========================================================================== */
 .modal-viewer-overlay {
     position: fixed;
     top: 0;
@@ -57,10 +127,4 @@ html, body {
     height: 100%;
     border: none;
     background: #f1f1f1;
-}
-
-.truncate-text {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }

@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.6.11806.211 stable
+VisualStudioVersion = 18.6.11806.211
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperationalWorkspaceUI", "BlazorApp1\OperationalWorkspaceUI.csproj", "{BCD82251-DFFE-4ECB-8A69-4D3A4B608E5E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperationalWorkspaceDomain", "OperationalWorkspaceDomain\OperationalWorkspaceDomain.csproj", "{4B67E793-5FC7-4A65-AD99-339B75615D44}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperationalWorkspaceInfrastruture", "OperationalWorkspaceInfrastruture\OperationalWorkspaceInfrastruture.csproj", "{624F1E20-CB1B-49D2-A405-F41A385CFF33}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperationalWorkspaceApplication", "OperationalWorkspaceApplication\OperationalWorkspaceApplication.csproj", "{8A99771E-7DEA-4C6F-A306-026139415798}"
 EndProject
@@ -27,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperationalWorkspaceUnitTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedProject", "SharedProject\SharedProject.csproj", "{2A7F0696-FB85-402D-BE54-7189EE17CE8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OperationalWorkspaceInfrastructure", "OperationalWorkspaceInfrastructure\OperationalWorkspaceInfrastructure.csproj", "{D3D01D38-4182-0CAB-D26C-265DB325AB60}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,10 +41,6 @@ Global
 		{4B67E793-5FC7-4A65-AD99-339B75615D44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4B67E793-5FC7-4A65-AD99-339B75615D44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4B67E793-5FC7-4A65-AD99-339B75615D44}.Release|Any CPU.Build.0 = Release|Any CPU
-		{624F1E20-CB1B-49D2-A405-F41A385CFF33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{624F1E20-CB1B-49D2-A405-F41A385CFF33}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{624F1E20-CB1B-49D2-A405-F41A385CFF33}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{624F1E20-CB1B-49D2-A405-F41A385CFF33}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8A99771E-7DEA-4C6F-A306-026139415798}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8A99771E-7DEA-4C6F-A306-026139415798}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A99771E-7DEA-4C6F-A306-026139415798}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -61,6 +57,10 @@ Global
 		{2A7F0696-FB85-402D-BE54-7189EE17CE8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A7F0696-FB85-402D-BE54-7189EE17CE8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A7F0696-FB85-402D-BE54-7189EE17CE8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3D01D38-4182-0CAB-D26C-265DB325AB60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3D01D38-4182-0CAB-D26C-265DB325AB60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3D01D38-4182-0CAB-D26C-265DB325AB60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3D01D38-4182-0CAB-D26C-265DB325AB60}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

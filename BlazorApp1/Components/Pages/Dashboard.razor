@@ -1,0 +1,225 @@
+﻿@page "/dashboard"
+@using OperationalWorkspaceUI.UIState
+@using OperationalWorkspaceUI.UIServices
+@using OperationalWorkspaceUI.Components.Shared
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@inject UIStateContainer StateContainer
+@inject IWorkspaceApiService ApiService
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="dashboard-viewport container p-2">
+
+    <!-- Context Header Component -->
+    <header class="card border p-2 mb-2 bg-white shadow-xs rounded" role="banner">
+        <div class="d-flex align-items-center">
+            <div class="me-2 context-header-avatar" aria-hidden="true">📧</div>
+            <div class="truncate-text col-10">
+                <h1 class="m-0 text-header">@StateContainer.SenderName</h1>
+                <small class="text-muted text-small" aria-label="Sender email address">@StateContainer.SenderEmail</small>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section 9: Integrated Offline Resiliency Check Layout Array Markers -->
+    @if (_isDeviceOffline || _isOperationPending || !string.IsNullOrEmpty(_uiActionErrorAlert))
+    {
+        <ActionableFeedbackCard IsOffline="_isDeviceOffline"
+                                IsLoading="_isOperationPending"
+                                LoadingMessage="Refreshing account balance ledger rows..."
+                                ErrorMessage="@_uiActionErrorAlert"
+                                OnRetryCallback="ForceOnDemandLedgerSync" />
+    }
+
+    <!-- Business Partner Customer 360 Analytical Financial Module Grid Layout -->
+    @if (StateContainer.CurrentContextResponse?.Customer != null && !_isOperationPending)
+    {
+        var bp = StateContainer.CurrentContextResponse.Customer;
+        <section class="card border mb-2 bg-white rounded shadow-sm" aria-label="Sage X3 Account Financial Standing metrics">
+            <div class="card-header bg-dark text-white p-2 d-flex justify-content-between align-items-center">
+                <span class="text-caption text-white">💼 Sage X3 Business Partner</span>
+                <span class="badge bg-success text-caption p-1 text-white" aria-label="Customer configuration state status">@bp.AccountStatus</span>
+            </div>
+            <div class="card-body p-2 bp-card-body">
+                <h2 class="text-header m-0 mb-1">@bp.CompanyName</h2>
+                <div class="text-muted text-small">Account Tracking Token ID: <span class="text-dark fw-bold" aria-label="Business partner code identifier">@bp.Id</span></div>
+
+                <hr class="my-2 bp-card-hr" />
+
+                <div class="row g-1 text-center" role="group" aria-label="Credit Exposure Metrics Summary">
+                    <div class="col-4 border-end">
+                        <div class="text-caption">Credit Limit</div>
+                        <div class="fw-bold text-dark text-small" aria-label='Total allocation limit: @bp.CreditLimit.ToString("C0")'>@bp.CreditLimit.ToString("C0")</div>
+                    </div>
+                    <div class="col-4 border-end">
+                        <div class="text-caption">Balance Due</div>
+                        <div class="fw-bold text-danger text-small" aria-label='Active balance due: @bp.BalanceDue.ToString("C0")'>@bp.BalanceDue.ToString("C0")</div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-caption">Available</div>
+                        <div class="fw-bold text-success text-small" aria-label='Remaining margin capacity: @bp.AvailableCredit.ToString("C0")'>@bp.AvailableCredit.ToString("C0")</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- High-Performance Virtualized and Accessible Document Ledger Logs Registry List Grid -->
+    <section class="card border bg-white rounded shadow-sm mb-2" aria-label="Linked Documents Array Records Log list viewport">
+        <h3 class="card-header bg-light p-2 text-caption text-secondary" id="doc-heading-label">
+            📄 Financial Document Logs
+        </h3>
+        <div class="card-body p-0 document-list-scrollpane" role="list" aria-labelledby="doc-heading-label">
+            @if (StateContainer.CurrentContextResponse?.RecentDocuments == null || !StateContainer.CurrentContextResponse.RecentDocuments.Any())
+            {
+                <div class="text-center text-muted py-3 small style-italic">No records linked to this user context profile matching active ledger indices.</div>
+            }
+            else
+            {
+                <Virtualize Items="StateContainer.CurrentContextResponse.RecentDocuments" Context="doc">
+                    <div class="compact-list-row d-flex justify-content-between align-items-center"
+                         role="listitem"
+                         aria-label='Document number @doc.DocumentNumber type @doc.Type created on @doc.Date.ToString("d") gross totals @doc.Amount @doc.Currency standing status flag @doc.Status'>
+                        <div class="truncate-text col-7">
+                            <span class="fw-semibold text-dark text-small">@doc.DocumentNumber</span>
+                            <div class="text-muted text-caption document-caption-meta">@doc.Type | @doc.Date.ToLocalTime().ToString("d")</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold text-secondary text-small me-2">@doc.Amount.ToString("N2") @doc.Currency</span>
+                            <span class="badge @(doc.Status == "Unpaid" ? "bg-warning" : "bg-danger") text-white text-caption px-1.5 py-0.5" aria-hidden="true">@doc.Status</span>
+                        </div>
+                    </div>
+                </Virtualize>
+            }
+        </div>
+    </section>
+
+    <!-- Universal Corporate Navigation Operational Action Routing Command Panel Layouts -->
+    @if (StateContainer.UserRoleScope.Contains("Admin"))
+    {
+        <nav class="admin-panel mt-2 border-top pt-2" role="navigation" aria-label="Administrative system operations routing navigation console options">
+            <button class="btn btn-outline-dark btn-sm w-100 fw-bold py-1.5 shadow-xs text-small"
+                    type="button"
+                    aria-label="Navigate to browse system security global audit trail records registries"
+                    @onclick="NavigateToAuditRegistry">
+                📊 Open Global Ticket Audit Registry
+            </button>
+        </nav>
+    }
+</div>
+
+@code {
+    private bool _isOperationPending = false;
+    private string _uiActionErrorAlert = string.Empty;
+    private bool _shouldRefreshLayoutState = true;
+    private bool _isDeviceOffline = false;
+    private static Action<MailItemChangedEventArgs>? _onMailItemSelectionChangedAction;
+
+    protected override void OnInitialized()
+    {
+        // Bind directly to your centralized state tracking listener hook
+        StateContainer.OnStateChanged += HandleWorkspaceDataStateUpdated;
+        _onMailItemSelectionChangedAction = HandleMailItemContextSwitched;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Section 9: Evaluate offline variables natively via web browser windows
+            _isDeviceOffline = !await JSRuntime.InvokeAsync<bool>("eval", "navigator.onLine");
+            _shouldRefreshLayoutState = true;
+            StateHasChanged();
+        }
+    }
+
+    protected override bool ShouldRender()
+    {
+        // Phase 5 Render Boundary Barrier Optimization: Avoid wasteful cascade repaint loops
+        if (_shouldRefreshLayoutState)
+        {
+            _shouldRefreshLayoutState = false;
+            return true;
+        }
+        return false;
+    }
+
+    private void HandleWorkspaceDataStateUpdated()
+    {
+        _shouldRefreshLayoutState = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    // Section 6 Resolution: Decoupled Interop Hook called from officeBridge.js on item alteration events
+    [JSInvokable("NotifyMailItemSelectionChanged")]
+    public static void NotifyMailItemSelectionChanged(MailItemChangedEventArgs args)
+    {
+        _onMailItemSelectionChangedAction?.Invoke(args);
+    }
+
+    private void HandleMailItemContextSwitched(MailItemChangedEventArgs args)
+    {
+        // Re-seed your memory state snapshots with the newly highlighted item properties
+        StateContainer.SetIdentityContext(args.SenderEmail, args.SenderName, StateContainer.ActiveUserEmail);
+        _shouldRefreshLayoutState = true;
+
+        // Fire an on-demand refresh to pull down the newly highlighted company's ledger rows
+        InvokeAsync(ForceOnDemandLedgerSync);
+    }
+
+    private async Task ForceOnDemandLedgerSync()
+    {
+        if (_isDeviceOffline) return;
+
+        _isOperationPending = true;
+        _uiActionErrorAlert = string.Empty;
+        _shouldRefreshLayoutState = true;
+        StateHasChanged();
+
+        try
+        {
+            // Query your upgraded versioned REST v1 backend endpoints smoothly
+            var response = await ApiService.GetWorkspaceContextAsync(StateContainer.SenderEmail, StateContainer.SenderName, StateContainer.ActiveUserEmail, "SIMULATED_USER_TOKEN");
+            if (response != null)
+            {
+                StateContainer.SetWorkspaceContextResponse(response);
+            }
+            else
+            {
+                _uiActionErrorAlert = "Unable to retrieve customer information. Please try again.";
+            }
+        }
+        catch
+        {
+            _uiActionErrorAlert = "Sage X3 is currently unavailable. Check your local staging port proxies.";
+        }
+        finally
+        {
+            _isOperationPending = false;
+            _shouldRefreshLayoutState = true;
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateToAuditRegistry()
+    {
+        var currentQuery = Nav.ToAbsoluteUri(Nav.Uri).Query;
+        Nav.NavigateTo($"/ticket-report{currentQuery}");
+    }
+
+    public void Dispose()
+    {
+        // Safe Lifecycle Boundary Unsubscription: Completely prevents background memory leaks
+        StateContainer.OnStateChanged -= HandleWorkspaceDataStateUpdated;
+    }
+
+    // Interop serialization transfer contract class layout
+    public class MailItemChangedEventArgs
+    {
+        public string SenderEmail { get; set; } = string.Empty;
+        public string SenderName { get; set; } = string.Empty;
+        public string MessageId { get; set; } = string.Empty;
+    }
+}
+

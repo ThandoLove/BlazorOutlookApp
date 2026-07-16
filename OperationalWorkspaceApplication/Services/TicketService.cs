@@ -1,41 +1,44 @@
-﻿using OperationalWorkspaceApplication.Dtos;
+﻿using Microsoft.Extensions.Options;
+using OperationalWorkspaceApplication.AppData;
+using OperationalWorkspaceApplication.Dtos;
+using OperationalWorkspaceApplication.Exceptions;
 using OperationalWorkspaceApplication.IServices;
 using OperationalWorkspaceApplication.Mappers;
 using OperationalWorkspaceApplication.Requests.TicketRequest;
 using OperationalWorkspaceApplication.Responses.TicketResponse;
+
 using OperationalWorkspaceDomain.Entities;
-using OperationalWorkspaceInfrastruture.Configuration;
-using OperationalWorkspaceInfrastruture.Data;
+using OperationalWorkspaceDomain.Enums;
+using OperationalWorkspaceDomain.Enums.TicketsEnum;
+using OperationalWorkspaceDomain.Strategies;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-
+using System.Threading.Tasks;
 
 namespace OperationalWorkspaceApplication.Services;
 
 public class TicketService : ITicketService
 {
-    private readonly WorkspaceDbContext _dbContext;
-    private readonly TicketPersistenceOptions _fileOptions;
-    private readonly SageX3Settings _settings;
+    private readonly IWorkspaceDataStore _dataStore;
+    private readonly ITicketPersistenceConfiguration _fileOptions;
+    private readonly ITicketSystemConfiguration _settings;
+    private readonly ITicketPriorityStrategy _priorityPolicy; // Injected priority evaluator
     private static readonly object _fileLock = new();
 
     public TicketService(
-        WorkspaceDbContext dbContext,
-        IOptions<TicketPersistenceOptions> fileOptions,
-        IOptions<SageX3Settings> settings)
+        IWorkspaceDataStore dataStore,
+        ITicketPersistenceConfiguration fileOptions,
+        ITicketSystemConfiguration settings,
+        ITicketPriorityStrategy priorityPolicy)
     {
-        _dbContext = dbContext;
-        _fileOptions = fileOptions.Value;
-        _settings = settings.Value;
+        _dataStore = dataStore;
+        _fileOptions = fileOptions;
+        _settings = settings;
+        _priorityPolicy = priorityPolicy;
     }
 
     public async Task<TicketActionResponse> HandleCreateTicketAsync(CreateTicketCommand command, CancellationToken ct)
@@ -44,16 +47,17 @@ public class TicketService : ITicketService
 
         try
         {
+            // Execute aggregate builder using clean extracted strategy rules
             var ticketEntity = OperationalTicket.OpenNewWorkspaceIncident(
-                command.CustomerCode, command.Subject, command.Description, command.EmailBody, command.EmailMessageId
+                command.CustomerCode, command.Subject, command.Description, command.EmailBody, command.EmailMessageId, _priorityPolicy
             );
 
             if (_settings.UseMocks)
             {
                 lock (_fileLock)
                 {
-                    // Fallback to locally isolated JSON isolated persistence when working without databases
-                    if (!Directory.Exists(_fileOptions.DatabaseDirectory)) Directory.CreateDirectory(_fileOptions.DatabaseDirectory);
+                    if (!Directory.Exists(_fileOptions.DatabaseDirectory))
+                        Directory.CreateDirectory(_fileOptions.DatabaseDirectory);
 
                     var list = new List<OperationalTicket>();
                     if (File.Exists(_fileOptions.FullDatabasePath))
@@ -66,19 +70,18 @@ public class TicketService : ITicketService
                     list.Add(ticketEntity);
                     File.WriteAllText(_fileOptions.FullDatabasePath, JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true }));
                 }
-                return new TicketActionResponse(true, ticketEntity.Id, string.Empty, ticketEntity.Priority);
+                return new TicketActionResponse(true, ticketEntity.Id, string.Empty, ticketEntity.Priority.ToString());
             }
 
-            // Database Live Path
             ticketEntity.AssignFinalDatabaseIdentityToken($"TK-SQL-{Guid.NewGuid().ToString()[..6].ToUpperInvariant()}");
-            await _dbContext.Tickets.AddAsync(ticketEntity, ct);
-            await _dbContext.SaveChangesAsync(ct);
+            await _dataStore.AddTicketAsync(ticketEntity, ct);
 
-            return new TicketActionResponse(true, ticketEntity.Id, string.Empty, ticketEntity.Priority);
+            return new TicketActionResponse(true, ticketEntity.Id, string.Empty, ticketEntity.Priority.ToString());
         }
         catch (Exception ex)
         {
-            return new TicketActionResponse(false, string.Empty, ex.Message, "Medium");
+            // Wrap legacy exceptions inside your domain exception tree definitions safely
+            throw new TicketCreationException(ex.Message, ex);
         }
     }
 
@@ -99,11 +102,11 @@ public class TicketService : ITicketService
         }
         else
         {
-            outList = await _dbContext.Tickets.OrderByDescending(t => t.CreatedAt).AsNoTracking().ToListAsync(ct);
+            outList = await _dataStore.GymAllTicketsAsync(ct);
         }
 
-        int highPriorityCount = outList.Count(t => t.Priority == "High" || t.Priority == "Critical");
-        int openCount = outList.Count(t => t.Status == "Open");
+        int highPriorityCount = outList.Count(t => t.Priority == TicketPriority.High || t.Priority == TicketPriority.Critical);
+        int openCount = outList.Count(t => t.Status == TicketStatus.Open);
         var dtos = outList.Select(IdentityModelMapper.MapToDto).ToList();
 
         return new AuditReportDto(outList.Count, openCount, highPriorityCount, DateTime.UtcNow, dtos);

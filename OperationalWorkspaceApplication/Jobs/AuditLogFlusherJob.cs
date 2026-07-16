@@ -1,18 +1,15 @@
-﻿using OperationalWorkspaceDomain.Entities;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using OperationalWorkspaceApplication.AppData; // Abstraction reference layer
+using OperationalWorkspaceDomain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-
-using System.Threading;
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-
-using OperationalWorkspaceInfrastruture.Data;
 
 namespace OperationalWorkspaceApplication.Jobs;
 
@@ -23,7 +20,6 @@ public interface IAuditLogQueue
 
 public class AuditLogFlusherJob : BackgroundService, IAuditLogQueue
 {
-    // High-performance Channel to execute thread-safe non-blocking async pipeline buffers
     private readonly Channel<AuditLog> _channel;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<AuditLogFlusherJob> _logger;
@@ -33,7 +29,6 @@ public class AuditLogFlusherJob : BackgroundService, IAuditLogQueue
         _serviceProvider = serviceProvider;
         _logger = logger;
 
-        // Constrain bounding targets to safely mitigate out-of-memory memory explosions under peak operations
         var options = new BoundedChannelOptions(5000)
         {
             FullMode = BoundedChannelFullMode.DropOldest,
@@ -55,26 +50,30 @@ public class AuditLogFlusherJob : BackgroundService, IAuditLogQueue
     {
         _logger.LogInformation("Asynchronous Security Audit Log background worker thread initialized successfully.");
 
-        // Continuous processing background parsing sequence loops
         while (await _channel.Reader.WaitToReadAsync(stoppingToken))
         {
             try
             {
                 using var scope = _serviceProvider.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<WorkspaceDbContext>();
+                // FIX: Request the clean data store interface, completely hiding EF Core from the Application Layer
+                var dataStore = scope.ServiceProvider.GetRequiredService<IWorkspaceDataStore>();
+                var batch = new List<AuditLog>();
 
-                // Process internal channel frames concurrently while data strings exist
                 while (_channel.Reader.TryRead(out var logEntry))
                 {
-                    await dbContext.AuditLogs.AddAsync(logEntry, stoppingToken);
+                    batch.Add(logEntry);
                 }
 
-                await dbContext.SaveChangesAsync(stoppingToken);
+                if (batch.Count > 0)
+                {
+                    // FIX: Save logs through the abstraction layer boundary smoothly
+                    await dataStore.AddAuditLogBatchAsync(batch, stoppingToken);
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogError(ex, "Background pipeline worker failed writing accumulated compliance records back to SQL Server.");
-                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken); // Circuit safety window cooling delay
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
     }
