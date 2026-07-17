@@ -1,0 +1,10 @@
+﻿<div class="text-center my-4" role="status" aria-live="polite">
+    <div class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></div>
+    <p class="text-muted mt-2 small" style="font-size: var(--font-size-small, 0.72rem); font-weight: 500;">
+        @Message
+    </p>
+</div>
+
+@code {
+    [Parameter] public string Message { get; set; } = "Querying secure application schemas...";
+}

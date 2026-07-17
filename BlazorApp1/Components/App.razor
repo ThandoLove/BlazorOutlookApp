@@ -4,31 +4,24 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sage X3 Outlook Workspace</title>
     <base href="/" />
-
-    <!-- Real Production Bootstrap 5.3 CSS Engine Framework Link -->
-    <link href="https://jsdelivr.net" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-
-    <!-- Local Compiled Responsive Style Layout Links -->
+    
+    <!-- Local fallback theme paths protect your layout from external CDN timeouts -->
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
-    <link rel="stylesheet" href="OperationalWorkspaceUI.styles.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    
+    <script src="https://microsoft.com" type="text/javascript"></script>
+    <script src="js/officeBridge.js"></script>
+    
+    <!-- FIX: Clean short token allowed by your static global imports without leading -->
+    <HeadOutlet renderMode="InteractiveServer" />
 </head>
 
-<body class="bg-light">
+<body>
+    <!-- FIX: Clean short token allowed by your static global imports without leading -->
+    <Routes renderMode="InteractiveServer" />
 
-    <!-- Interactive Component Router Viewport Matrix -->
-    <Routes />
-
-    <!-- Official, Secure Microsoft OfficeJS Core CDN Library Reference (Enables Outlook Mail Context) -->
-    <script src="https://microsoft.com" type="text/javascript"></script>
-
-    <!-- Local Javascript Multi-Format Attachment & Interop Script Bridge -->
-    <script src="js/officeBridge.js"></script>
-
-    <!-- Native .NET 8 Blazor Bootstrapper Runtime Engine -->
     <script src="_framework/blazor.web.js"></script>
 </body>
 

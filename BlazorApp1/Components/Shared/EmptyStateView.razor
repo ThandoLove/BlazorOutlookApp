@@ -1,0 +1,12 @@
+﻿<div class="text-center text-muted py-3 small style-italic bg-light rounded"
+     role="status"
+     aria-live="polite"
+     style="font-size: var(--font-size-small, 0.72rem); border: 1px dashed var(--sage-border-color, #edebe9);">
+    <div class="mb-1" style="font-size: 1.2rem;" aria-hidden="true">@Icon</div>
+    <div>@Message</div>
+</div>
+
+@code {
+    [Parameter] public string Message { get; set; } = "No matching records found.";
+    [Parameter] public string Icon { get; set; } = "📭";
+}

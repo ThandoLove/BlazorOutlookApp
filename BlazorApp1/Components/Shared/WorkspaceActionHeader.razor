@@ -1,0 +1,19 @@
+﻿<header class="card border p-2 mb-2 bg-white shadow-xs rounded" role="banner">
+    <div class="d-flex align-items-center">
+        <div class="me-2 context-avatar" aria-hidden="true">📧</div>
+        <div class="truncate-text col-10">
+            <h1 class="m-0 text-header fw-bold" style="font-size: var(--font-size-header, 0.9rem); color: var(--sage-dark, #212529);">
+                @Title
+            </h1>
+            <small class="text-muted text-small" aria-label="Selected target email profile identifier">
+                @Subtitle
+            </small>
+        </div>
+    </div>
+</header>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Subtitle { get; set; } = string.Empty;
+}
+

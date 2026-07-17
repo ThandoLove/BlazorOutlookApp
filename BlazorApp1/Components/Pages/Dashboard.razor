@@ -2,12 +2,15 @@
 @using OperationalWorkspaceUI.UIState
 @using OperationalWorkspaceUI.UIServices
 @using OperationalWorkspaceUI.Components.Shared
+@using OperationalWorkspaceApplication.Dtos
 @using Microsoft.AspNetCore.Components.Web.Virtualization
+@using OperationalWorkspaceApplication.Responses.WorkspaceContextResponse
 @inject UIStateContainer StateContainer
 @inject IWorkspaceApiService ApiService
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
 @implements IDisposable
+@rendermode InteractiveServer
 
 <div class="dashboard-viewport container p-2">
 
@@ -25,9 +28,10 @@
     <!-- Section 9: Integrated Offline Resiliency Check Layout Array Markers -->
     @if (_isDeviceOffline || _isOperationPending || !string.IsNullOrEmpty(_uiActionErrorAlert))
     {
+        <!-- Phase 10 Polish: Passing progressive status messages instead of static strings -->
         <ActionableFeedbackCard IsOffline="_isDeviceOffline"
                                 IsLoading="_isOperationPending"
-                                LoadingMessage="Refreshing account balance ledger rows..."
+                                LoadingMessage="@_currentProgressiveStatusText"
                                 ErrorMessage="@_uiActionErrorAlert"
                                 OnRetryCallback="ForceOnDemandLedgerSync" />
     }
@@ -39,10 +43,21 @@
         <section class="card border mb-2 bg-white rounded shadow-sm" aria-label="Sage X3 Account Financial Standing metrics">
             <div class="card-header bg-dark text-white p-2 d-flex justify-content-between align-items-center">
                 <span class="text-caption text-white">💼 Sage X3 Business Partner</span>
-                <span class="badge bg-success text-caption p-1 text-white" aria-label="Customer configuration state status">@bp.AccountStatus</span>
+                <StatusBadge Value="@bp.AccountStatus" />
             </div>
             <div class="card-body p-2 bp-card-body">
-                <h2 class="text-header m-0 mb-1">@bp.CompanyName</h2>
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <h2 class="text-header m-0 col-9 truncate-text">@bp.CompanyName</h2>
+
+                    <!-- Phase 8 Resolution: Direct Enterprise Deep-Link Navigation Anchor to Sage X3 Client -->
+                    <a href="@BuildSageX3CustomerDeepLink(bp.Id)"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="badge bg-primary text-decoration-none text-white text-caption"
+                       aria-label="Open this customer master profile record inside native Sage X3 client">
+                        🔗 Open X3
+                    </a>
+                </div>
                 <div class="text-muted text-small">Account Tracking Token ID: <span class="text-dark fw-bold" aria-label="Business partner code identifier">@bp.Id</span></div>
 
                 <hr class="my-2 bp-card-hr" />
@@ -71,9 +86,14 @@
             📄 Financial Document Logs
         </h3>
         <div class="card-body p-0 document-list-scrollpane" role="list" aria-labelledby="doc-heading-label">
-            @if (StateContainer.CurrentContextResponse?.RecentDocuments == null || !StateContainer.CurrentContextResponse.RecentDocuments.Any())
+            @if (_isLazyLoadingDocuments)
             {
-                <div class="text-center text-muted py-3 small style-italic">No records linked to this user context profile matching active ledger indices.</div>
+                <LoadingPanel Message="Progressively synchronizing secondary financial data tables..." />
+            }
+            else if (StateContainer.CurrentContextResponse?.RecentDocuments == null || !StateContainer.CurrentContextResponse.RecentDocuments.Any())
+            {
+                <!-- Phase 10 Polish: Dynamic context-aware empty-state component -->
+                <EmptyStateView Message="No financial documents or recent ledger records found for this customer account." Icon="📄" />
             }
             else
             {
@@ -82,12 +102,19 @@
                          role="listitem"
                          aria-label='Document number @doc.DocumentNumber type @doc.Type created on @doc.Date.ToString("d") gross totals @doc.Amount @doc.Currency standing status flag @doc.Status'>
                         <div class="truncate-text col-7">
-                            <span class="fw-semibold text-dark text-small">@doc.DocumentNumber</span>
+                            <!-- Phase 8 Resolution: Sub-resource operational Deep-Link for specific invoice document frames -->
+                            <a href="@BuildSageX3DocumentDeepLink(doc.DocumentNumber, doc.Type)"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="fw-semibold text-primary text-small text-decoration-underline"
+                               aria-label="Deep link view document details natively inside ERP screen">
+                                @doc.DocumentNumber
+                            </a>
                             <div class="text-muted text-caption document-caption-meta">@doc.Type | @doc.Date.ToLocalTime().ToString("d")</div>
                         </div>
                         <div class="text-end">
                             <span class="fw-bold text-secondary text-small me-2">@doc.Amount.ToString("N2") @doc.Currency</span>
-                            <span class="badge @(doc.Status == "Unpaid" ? "bg-warning" : "bg-danger") text-white text-caption px-1.5 py-0.5" aria-hidden="true">@doc.Status</span>
+                            <StatusBadge Value="@doc.Status" />
                         </div>
                     </div>
                 </Virtualize>
@@ -108,17 +135,21 @@
         </nav>
     }
 </div>
-
 @code {
     private bool _isOperationPending = false;
+    private bool _isLazyLoadingDocuments = false;
     private string _uiActionErrorAlert = string.Empty;
     private bool _shouldRefreshLayoutState = true;
     private bool _isDeviceOffline = false;
     private static Action<MailItemChangedEventArgs>? _onMailItemSelectionChangedAction;
 
+    // Phase 10 Polish: User indicator variables
+    private string _currentProgressiveStatusText = "Authenticating secure identity context...";
+
+    private const string SageX3ClientBaseUrl = "https://your-firm.com";
+
     protected override void OnInitialized()
     {
-        // Bind directly to your centralized state tracking listener hook
         StateContainer.OnStateChanged += HandleWorkspaceDataStateUpdated;
         _onMailItemSelectionChangedAction = HandleMailItemContextSwitched;
     }
@@ -127,7 +158,6 @@
     {
         if (firstRender)
         {
-            // Section 9: Evaluate offline variables natively via web browser windows
             _isDeviceOffline = !await JSRuntime.InvokeAsync<bool>("eval", "navigator.onLine");
             _shouldRefreshLayoutState = true;
             StateHasChanged();
@@ -136,7 +166,6 @@
 
     protected override bool ShouldRender()
     {
-        // Phase 5 Render Boundary Barrier Optimization: Avoid wasteful cascade repaint loops
         if (_shouldRefreshLayoutState)
         {
             _shouldRefreshLayoutState = false;
@@ -151,7 +180,6 @@
         InvokeAsync(StateHasChanged);
     }
 
-    // Section 6 Resolution: Decoupled Interop Hook called from officeBridge.js on item alteration events
     [JSInvokable("NotifyMailItemSelectionChanged")]
     public static void NotifyMailItemSelectionChanged(MailItemChangedEventArgs args)
     {
@@ -160,11 +188,8 @@
 
     private void HandleMailItemContextSwitched(MailItemChangedEventArgs args)
     {
-        // Re-seed your memory state snapshots with the newly highlighted item properties
         StateContainer.SetIdentityContext(args.SenderEmail, args.SenderName, StateContainer.ActiveUserEmail);
         _shouldRefreshLayoutState = true;
-
-        // Fire an on-demand refresh to pull down the newly highlighted company's ledger rows
         InvokeAsync(ForceOnDemandLedgerSync);
     }
 
@@ -174,32 +199,71 @@
 
         _isOperationPending = true;
         _uiActionErrorAlert = string.Empty;
+
+        // Phase 10 Progress Tracking: Step 1
+        _currentProgressiveStatusText = "Authenticating secure identity credentials...";
         _shouldRefreshLayoutState = true;
         StateHasChanged();
 
         try
         {
-            // Query your upgraded versioned REST v1 backend endpoints smoothly
-            var response = await ApiService.GetWorkspaceContextAsync(StateContainer.SenderEmail, StateContainer.SenderName, StateContainer.ActiveUserEmail, "SIMULATED_USER_TOKEN");
-            if (response != null)
+            await Task.Delay(300); // UI thread breathing gap
+            _currentProgressiveStatusText = "Resolving business partner context profiles...";
+            StateHasChanged();
+
+            // Phase 7 Resolution: Read the custom Result wrapper contract safely
+            var result = await ApiService.GetWorkspaceContextAsync(StateContainer.SenderEmail, StateContainer.SenderName, StateContainer.ActiveUserEmail, "SIMULATED_USER_TOKEN");
+
+            if (result != null && result.IsSuccess && result.Value != null)
             {
-                StateContainer.SetWorkspaceContextResponse(response);
+                var response = result.Value;
+
+                var identityOnlyPayload = new WorkspaceContextResponse(response.Customer, new List<SageDocumentDto>(), response.AiExecutiveBrief, response.IsInternalEmployee, response.SuggestedNextActionCard, response.RecommendedActionStyleMarker);
+                StateContainer.SetWorkspaceContextResponse(identityOnlyPayload);
+
+                _isOperationPending = false;
+                _shouldRefreshLayoutState = true;
+                await InvokeAsync(StateHasChanged);
+
+                if (response.Customer != null)
+                {
+                    _isLazyLoadingDocuments = true;
+                    _shouldRefreshLayoutState = true;
+                    StateHasChanged();
+
+                    await Task.Delay(400);
+
+                    var completePayload = new WorkspaceContextResponse(response.Customer, response.RecentDocuments, response.AiExecutiveBrief, response.IsInternalEmployee, response.SuggestedNextActionCard, response.RecommendedActionStyleMarker);
+                    StateContainer.SetWorkspaceContextResponse(completePayload);
+                }
             }
             else
             {
-                _uiActionErrorAlert = "Unable to retrieve customer information. Please try again.";
+                // Phase 10 Polish: Mask raw network exceptions with clean business language
+                _uiActionErrorAlert = "Unable to load customer information. Please verify network access or try again.";
             }
         }
         catch
         {
-            _uiActionErrorAlert = "Sage X3 is currently unavailable. Check your local staging port proxies.";
+            _uiActionErrorAlert = "Sage X3 is currently unavailable. Stored workspace operations will remain active.";
         }
         finally
         {
             _isOperationPending = false;
+            _isLazyLoadingDocuments = false;
             _shouldRefreshLayoutState = true;
             StateHasChanged();
         }
+    }
+
+    // Helper functions to compile clean native corporate web client deep-links
+    private string BuildSageX3CustomerDeepLink(string customerId) =>
+        $"{SageX3ClientBaseUrl}#function=GESBPC&mode=2&key={Uri.EscapeDataString(customerId)}";
+
+    private string BuildSageX3DocumentDeepLink(string docNo, string type)
+    {
+        string functionCode = type.Contains("Invoice", StringComparison.OrdinalIgnoreCase) ? "GESSIH" : "GESSOH";
+        return $"{SageX3ClientBaseUrl}#function={functionCode}&mode=2&key={Uri.EscapeDataString(docNo)}";
     }
 
     private void NavigateToAuditRegistry()
@@ -210,11 +274,9 @@
 
     public void Dispose()
     {
-        // Safe Lifecycle Boundary Unsubscription: Completely prevents background memory leaks
         StateContainer.OnStateChanged -= HandleWorkspaceDataStateUpdated;
     }
 
-    // Interop serialization transfer contract class layout
     public class MailItemChangedEventArgs
     {
         public string SenderEmail { get; set; } = string.Empty;
@@ -222,4 +284,3 @@
         public string MessageId { get; set; } = string.Empty;
     }
 }
-

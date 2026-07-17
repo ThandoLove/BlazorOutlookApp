@@ -1,0 +1,23 @@
+﻿<span class="badge @GetBadgeColorClass() text-white text-caption px-1.5 py-0.5"
+      aria-label="Current status item: @Value"
+      style="font-size: 0.65rem; padding: 2px 4px; font-weight: 600; border-radius: 4px;">
+    @Value
+</span>
+
+@code {
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+
+    private string GetBadgeColorClass()
+    {
+        if (string.IsNullOrWhiteSpace(Value)) return "bg-secondary";
+
+        return Value.Trim().ToUpperInvariant() switch
+        {
+            "OPEN" or "ACTIVE" or "SUCCESS" => "bg-success",
+            "UNPAID" or "INPROGRESS" or "WARNING" or "MEDIUM" => "bg-warning",
+            "OVERDUE" or "CRITICAL" or "CLOSED" or "DANGER" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
+

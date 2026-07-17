@@ -21,6 +21,7 @@ public class UIStateContainer
 
     public void SetAuthenticatedState(bool isAuthenticated)
     {
+        if (IsAuthenticated == isAuthenticated) return;
         IsAuthenticated = isAuthenticated;
         NotifyStateChanged();
     }
@@ -46,6 +47,27 @@ public class UIStateContainer
     {
         CurrentContextResponse = response;
         NotifyStateChanged();
+    }
+
+    /// <summary>
+    /// Phase 2 Audit Resolution: Batches multi-property session updates into 
+    /// a single atomic refresh signal to prevent wasteful Blazor UI repaints.
+    /// </summary>
+    public void UpdateSession(bool isAuthenticated, string senderEmail, string senderName, string activeUserEmail, string? roleScope, WorkspaceContextResponse? response)
+    {
+        IsAuthenticated = isAuthenticated;
+        SenderEmail = senderEmail?.Trim() ?? string.Empty;
+        SenderName = senderName?.Trim() ?? string.Empty;
+        ActiveUserEmail = activeUserEmail?.Trim() ?? string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(roleScope))
+        {
+            UserRoleScope = roleScope.Trim();
+        }
+
+        CurrentContextResponse = response;
+
+        NotifyStateChanged(); // Fires exactly once for the entire update batch
     }
 
     public void ClearSessionStore()

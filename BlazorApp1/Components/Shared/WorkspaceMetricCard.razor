@@ -1,0 +1,15 @@
+﻿<div class="col-4 border-end last-border-none text-center" role="group" aria-label="@AriaLabel">
+    <div class="text-caption text-uppercase text-muted" style="font-size: 0.65rem; font-weight: 600; letter-spacing: 0.5px;">
+        @Label
+    </div>
+    <div class="fw-bold @ValueClass text-small" style="font-size: 0.72rem; margin-top: 2px;">
+        @Value
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string ValueClass { get; set; } = "text-dark";
+    [Parameter] public string AriaLabel { get; set; } = string.Empty;
+}

@@ -2,7 +2,9 @@
 using OperationalWorkspaceApplication.Requests.TicketRequest;
 using OperationalWorkspaceApplication.Responses.TicketResponse;
 using OperationalWorkspaceApplication.Responses.WorkspaceContextResponse;
+using OperationalWorkspaceUI.Models; // Reference the unified Result wrapper
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -12,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using global::OperationalWorkspaceUI.UIState;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace OperationalWorkspaceUI.UIServices;
 
@@ -25,13 +28,12 @@ public class WorkspaceApiService : IWorkspaceApiService
     public WorkspaceApiService(
         HttpClient httpClient,
         UIStateContainer stateContainer,
-        ILogger<WorkspaceApiService> logger) // Phase 3 Audit: Native structural telemetry logging
+        ILogger<WorkspaceApiService> logger)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _stateContainer = stateContainer ?? throw new ArgumentNullException(nameof(stateContainer));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        // Centralized Serialization Policies (Phase 3 Requirement #9)
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -40,44 +42,76 @@ public class WorkspaceApiService : IWorkspaceApiService
         };
     }
 
-    public async Task<OauthInitResponseDto?> InitializeOAuthChallengeAsync()
+    public async Task<Result<OauthInitResponseDto>> InitializeOAuthChallengeAsync()
     {
-        // FIX: Pointing to your unified v1 Auth entry-point routing pathways
-        return await ExecuteWithClientResilienceAsync<OauthInitResponseDto>(
+        var rawResponse = await ExecuteWithClientResilienceAsync<OauthInitResponseDto>(
             "InitializeOAuthChallenge",
             () => _httpClient.GetAsync("api/v1/auth/login"));
+
+        if (rawResponse == null)
+        {
+            return Result<OauthInitResponseDto>.Failure("Failed to initialize the external authentication sequence.", "AUTH_INIT_FAILED");
+        }
+
+        return Result<OauthInitResponseDto>.Success(rawResponse);
     }
 
-    public async Task<TokenExchangeResponseDto?> ExchangeTokenCodeAsync(string code)
+    public async Task<Result<TokenExchangeResponseDto>> ExchangeTokenCodeAsync(string code)
     {
-        if (string.IsNullOrWhiteSpace(code)) return null;
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return Result<TokenExchangeResponseDto>.Failure("Authorization callback code argument cannot be blank.", "INVALID_ARGUMENT");
+        }
 
-        // FIX: Pointing to your unified v1 Auth callback routing pathways
-        return await ExecuteWithClientResilienceAsync<TokenExchangeResponseDto>(
+        var queryParams = new Dictionary<string, string?> { { "code", code } };
+        string path = QueryHelpers.AddQueryString("api/v1/auth/callback", queryParams);
+
+        var rawResponse = await ExecuteWithClientResilienceAsync<TokenExchangeResponseDto>(
             "ExchangeTokenCode",
-            () => _httpClient.GetAsync($"api/v1/auth/callback?code={Uri.EscapeDataString(code)}"));
+            () => _httpClient.GetAsync(path));
+
+        if (rawResponse == null)
+        {
+            return Result<TokenExchangeResponseDto>.Failure("Syracuse identity provider rejected token exchange payload code.", "TOKEN_EXCHANGE_REJECTED");
+        }
+
+        return Result<TokenExchangeResponseDto>.Success(rawResponse);
     }
 
-    public async Task<WorkspaceContextResponse?> GetWorkspaceContextAsync(string email, string name, string activeUser, string userToken)
+    public async Task<Result<WorkspaceContextResponse>> GetWorkspaceContextAsync(string email, string name, string activeUser, string userToken)
     {
-        // FIX: Phase 4 Audit Resolution: Upgraded query path targeting resource-based versioned v1 REST endpoints
-        string path = $"api/v1/customers/context?email={Uri.EscapeDataString(email)}&name={Uri.EscapeDataString(name)}&activeUser={Uri.EscapeDataString(activeUser)}";
+        var queryParams = new Dictionary<string, string?>
+        {
+            { "email", email },
+            { "name", name },
+            { "activeUser", activeUser }
+        };
+        string path = QueryHelpers.AddQueryString("api/v1/customers/context", queryParams);
 
-        return await ExecuteWithClientResilienceAsync<WorkspaceContextResponse>(
+        var rawResponse = await ExecuteWithClientResilienceAsync<WorkspaceContextResponse>(
             "GetWorkspaceContext",
             () => {
                 var request = new HttpRequestMessage(HttpMethod.Get, path);
                 ApplySecurityHeaders(request, userToken);
                 return _httpClient.SendAsync(request);
             });
+
+        if (rawResponse == null)
+        {
+            return Result<WorkspaceContextResponse>.Failure("Identity context could not be resolved from active Sage folders.", "CUSTOMER_NOT_FOUND");
+        }
+
+        return Result<WorkspaceContextResponse>.Success(rawResponse);
     }
 
-    public async Task<TicketActionResponse?> SubmitIncidentTicketAsync(CreateTicketCommand command, string userToken)
+    public async Task<Result<TicketActionResponse>> SubmitIncidentTicketAsync(CreateTicketCommand command, string userToken)
     {
-        if (command == null) return new TicketActionResponse(false, string.Empty, "Null payload submission.", "Medium");
+        if (command == null)
+        {
+            return Result<TicketActionResponse>.Failure("Null transaction payload block submitted.", "INVALID_PAYLOAD");
+        }
 
-        // FIX: Phase 4 Audit Resolution: Upgraded post path targeting versioned v1 plural REST collection routes
-        return await ExecuteWithClientResilienceAsync<TicketActionResponse>(
+        var rawResponse = await ExecuteWithClientResilienceAsync<TicketActionResponse>(
             "SubmitIncidentTicket",
             async () => {
                 var request = new HttpRequestMessage(HttpMethod.Post, "api/v1/tickets")
@@ -87,6 +121,13 @@ public class WorkspaceApiService : IWorkspaceApiService
                 ApplySecurityHeaders(request, userToken);
                 return await _httpClient.SendAsync(request);
             });
+
+        if (rawResponse == null)
+        {
+            return Result<TicketActionResponse>.Failure("System encountered an internal processing fault while creating the support incident.", "TICKET_CREATION_FAILED");
+        }
+
+        return Result<TicketActionResponse>.Success(rawResponse);
     }
 
     private void ApplySecurityHeaders(HttpRequestMessage request, string token)
@@ -95,15 +136,9 @@ public class WorkspaceApiService : IWorkspaceApiService
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
-
-        // Pass active security roles dynamically to support structural Authorization Policies evaluation
         request.Headers.Add("X-Sage-Functional-Roles", _stateContainer.UserRoleScope);
     }
 
-    /// <summary>
-    /// Phase 3 Requirement: Native Client-Side Resilience Engine.
-    /// Executes outgoing Blazor gateway requests with Correlation IDs, Duration Timers, and Exponential Backoffs.
-    /// </summary>
     private async Task<T?> ExecuteWithClientResilienceAsync<T>(string operation, Func<Task<HttpResponseMessage>> sendRequestFunc) where T : class
     {
         const int maxAttempts = 3;
@@ -126,13 +161,15 @@ public class WorkspaceApiService : IWorkspaceApiService
                 _logger.LogInformation("[{TraceId}] UI Api Pipeline Response: {Op} returned HTTP {Code} in {Duration}ms",
                     correlationId, operation, (int)response.StatusCode, timer.ElapsedMilliseconds);
 
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _logger.LogWarning("[{TraceId}] Security boundary detected an expired or revoked session token. Forcing safe clear of state stores...", correlationId);
+                    _stateContainer.ClearSessionStore();
+                    break;
+                }
+
                 if (!response.IsSuccessStatusCode)
                 {
-                    if (typeof(T) == typeof(TicketActionResponse))
-                    {
-                        string rawError = await response.Content.ReadAsStringAsync();
-                        return new TicketActionResponse(false, string.Empty, $"Server processing fault: {rawError}", "Medium") as T;
-                    }
                     return null;
                 }
 
@@ -144,7 +181,7 @@ public class WorkspaceApiService : IWorkspaceApiService
                     correlationId, operation, backoffMs);
 
                 await Task.Delay(backoffMs);
-                backoffMs *= 2; // Exponential scale backoff loop
+                backoffMs *= 2;
             }
             catch (Exception ex)
             {
@@ -154,5 +191,7 @@ public class WorkspaceApiService : IWorkspaceApiService
                 return null;
             }
         }
+
+        return null;
     }
 }

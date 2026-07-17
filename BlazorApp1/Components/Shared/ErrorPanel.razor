@@ -1,0 +1,32 @@
+﻿@using System.Threading.Tasks
+
+<div class="alert alert-warning p-2 small shadow-xs d-flex flex-column align-items-center text-center"
+     role="alert"
+     style="font-size: var(--font-size-small, 0.72rem); border-radius: 6px; background-color: #fff8f2; border-color: #fde7e1;">
+
+    <div class="mb-1" style="font-size: 1.1rem;" aria-hidden="true">⚠️</div>
+    <span class="fw-semibold text-dark mb-1">@Message</span>
+
+    @if (OnRetry.HasDelegate)
+    {
+        <button class="btn btn-xs btn-outline-danger px-2 py-0.5 mt-1 fw-bold"
+                type="button"
+                style="font-size: 0.65rem; border-radius: 4px;"
+                @onclick="ExecuteRetryCallback">
+            🔄 Retry
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public string Message { get; set; } = "Unable to process the current transaction.";
+    [Parameter] public EventCallback OnRetry { get; set; }
+
+    private async Task ExecuteRetryCallback()
+    {
+        if (OnRetry.HasDelegate)
+        {
+            await OnRetry.InvokeAsync();
+        }
+    }
+}
